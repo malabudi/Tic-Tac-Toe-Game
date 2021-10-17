@@ -1,16 +1,20 @@
 #include <stdio.h>
 
 // Function Prototypes
+char askGamemode();
 void displayBoard(char gameBoard[3][3]);
 char selectLocation(char player, char gameBoard[3][3]);
 int isSpotTaken(char location, char gameBoard[3][3]);      // Can make this function bool, but used int instead so I dont need to import the stdbool.h file
 char setTurn(char gameBoard[3][3], char location, char player);
 int checkForWin(char gameBoard[3][3], int moves);
+char playAgain();
+int miniMax();
 
 
 int main()
 {
 	// Initialize/declare variables
+	char gamemode;
 	char board[3][3] = {{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}};
 	char location;
 	char player = 'X';      // Initialize the first player to X, then switch to O for second player when necessary
@@ -18,84 +22,98 @@ int main()
 	int currentGame = 1;    // A bool that will switch off if the user is done playing
 	char choice;
 
+
+	// Call functions to begin the game
+	gamemode = askGamemode();
     displayBoard(board);
 
-	// Call functions
-	while(currentGame)
+    switch(gamemode)
     {
-        location = selectLocation(player, board);
-
-        player = setTurn(board, location, player);
-
-        moves++;    // after the user or computer makes a valid move, increment
-
-        currentGame = checkForWin(board, moves); // if the user wins, currentGame is false
-
-        displayBoard(board);
-
-
-
-        // Check if the user wants to play again after the game is finished
-        if (currentGame == 0)
-        {
-            printf("\nWould you like to play again? (Y/N): ");
-            scanf("\n%c", &choice);
-
-
-            // turn the user choice into uppercase
-            if (choice > 96 && choice < 123)
-                choice -= 32;
-
-            // Validate the user's choice to play again
-            while (choice != 'N' && choice != 'Y')
+        // 2 Player
+        case '1':
+            while(currentGame)
             {
-                printf("\nInvalid input, please enter Y or N.");
+                location = selectLocation(player, board);
 
-                printf("\nWould you like to play again? (Y/N): ");
-                scanf("\n%c", &choice);
+                player = setTurn(board, location, player);
 
-                if (choice > 96 && choice < 123)
-                    choice -= 32;
-            }
+                moves++;    // after the user or computer makes a valid move, increment
 
-
-            // if the user says yes, reset the game and start again
-            if (choice == 'Y')
-            {
-                // reset board
-                board[0][0] = '1';
-                board[0][1] = '2';
-                board[0][2] = '3';
-                board[1][0] = '4';
-                board[1][1] = '5';
-                board[1][2] = '6';
-                board[2][0] = '7';
-                board[2][1] = '8';
-                board[2][2] = '9';
+                currentGame = checkForWin(board, moves); // if the user wins, currentGame is false
 
                 displayBoard(board);
 
-                player = 'X';   // reset player
-                moves = 0;      // reset moves made in game from both players
-                currentGame = 1;
-                fflush(stdin);  // Flush out any buffer in the input device
-                continue;
+                // Check if the user wants to play again after the game is finished
+                if (currentGame == 0)
+                {
+                    // Ask the user if they want to play again after the game is over
+                    choice = playAgain();
+
+                    // if the user says yes, reset the game and start again
+                    switch(choice)
+                    {
+                        case 'Y':
+                            // reset board
+                            board[0][0] = '1';
+                            board[0][1] = '2';
+                            board[0][2] = '3';
+                            board[1][0] = '4';
+                            board[1][1] = '5';
+                            board[1][2] = '6';
+                            board[2][0] = '7';
+                            board[2][1] = '8';
+                            board[2][2] = '9';
+
+                            displayBoard(board);
+
+                            player = 'X';   // reset player
+                            moves = 0;      // reset moves made in game from both players
+                            currentGame = 1;
+                            fflush(stdin);  // Flush out any buffer in the input device
+                            break;
+                        case 'N':
+                            printf("\nThank you for playing!");
+                            return 0;
+                    }
+                }
             }
-            // exit main function if they no longer want to play
-            else if (choice == 'N')
-            {
-                printf("\nThank you for playing!");
-                return 0;
-            }
-        }
+            break;
+        // Playing against AI or Computer
+        case '2':
+            printf("\nSorry this feature is not yet available");
+            break;
     }
-
-
 	return 0;
 }
 //-----------------------------------------------------------------------------------------------------------
 // User defined functions
 
+// Ask if the user wants to play against an AI or another person
+char askGamemode()
+{
+    char gameMode;
+
+    // Ask the user what gamemode they want to play
+    printf("------Tic Tac Toe------\n");
+    printf("\nWould you like to play  2-Player or against a CPU?");
+    printf("\n1 - 2 Payer");
+    printf("\n2 - CPU\n");
+    scanf("\n%c", &gameMode);
+
+    // Validate input
+    while (gameMode != '1' && gameMode != '2')
+    {
+        printf("\nInvalid input! Please enter either 1 - 2\n");
+
+        printf("\nWould you like to play  2-Player or against a CPU?");
+        printf("\n1 - 2 Payer");
+        printf("\n2 - CPU\n");
+        scanf("\n%c", &gameMode);
+    }
+
+    fflush(stdin);
+    return gameMode;
+}
 
 
 // Display the tic tac toe board
@@ -113,7 +131,6 @@ void displayBoard(char gameBoard[3][3])
 		printf("|\n-------------\n");
 	}
 }
-
 
 
 char selectLocation(char player, char gameBoard[3][3])
@@ -157,7 +174,6 @@ char selectLocation(char player, char gameBoard[3][3])
 }
 
 
-
 int isSpotTaken(char location, char gameBoard[3][3])
 {
     /* Initialize the variable to be true so in case the spot that the user chose is free
@@ -176,7 +192,6 @@ int isSpotTaken(char location, char gameBoard[3][3])
 
 	return 1;
 }
-
 
 
 char setTurn(char gameBoard[3][3], char location, char player)
@@ -206,7 +221,6 @@ char setTurn(char gameBoard[3][3], char location, char player)
 
     return player;
 }
-
 
 
 int checkForWin(char boardGame[3][3], int moves)
@@ -273,4 +287,39 @@ int checkForWin(char boardGame[3][3], int moves)
         printf("\nIt is a cats game!\n");
         return 0;
     }
+}
+
+
+char playAgain()
+{
+    char choice;
+
+    // Ask the user to play again
+    printf("\nWould you like to play again? (Y/N): ");
+    scanf("\n%c", &choice);
+
+
+    // turn the user choice character into uppercase if lowercase
+    if (choice > 96 && choice < 123)
+            choice -= 32;
+
+    // Validate the user's choice to play again
+    while (choice != 'N' && choice != 'Y')
+    {
+        printf("\nInvalid input, please enter Y or N.");
+
+        printf("\nWould you like to play again? (Y/N): ");
+        scanf("\n%c", &choice);
+
+        if (choice > 96 && choice < 123)
+            choice -= 32;
+    }
+
+    return choice;
+}
+
+
+int miniMax()
+{
+    return 1;
 }
