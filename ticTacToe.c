@@ -10,26 +10,25 @@ int isSpotTaken(char location, char gameBoard[3][3]);      // Can make this func
 char setTurn(char gameBoard[3][3], char location, char player);
 int checkForWin(char gameBoard[3][3]);
 void displayWinner(int winner);
-char playAgain();
+int playAgain(char board[3][3]);
 int miniMax(char board[3][3], int depth, int isMaximizing);
 void getBestMove(char board[3][3]);
 
 
 int main()
 {
-	// Initialize/declare variables
+    // Initialize/declare variables
 	char gamemode;
 	char board[3][3] = {{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}};
 	char location;
 	char player = 'X';      // Initialize the first player to X, then switch to O for second player when necessary
 	int moves = 0;
-	int currentGame = 1;    // A bool that will switch off if the user is done playing
+	int currentGame = 1;    // score for the current state of the tic tac toe game, 1 is default, 0 is cats, 10 and -10 are wins for X and O respectively
 	char choicePlayAgain;
 
 
 	// Call functions to begin the game
 	gamemode = askGamemode();
-    //displayBoard(board);
 
     switch(gamemode)
     {
@@ -55,28 +54,21 @@ int main()
                     displayWinner(currentGame);
 
                     // Ask the user if they want to play again after the game is over
-                    choicePlayAgain = playAgain();
-
-                    // if the user says yes, reset the game and start again
-                    switch(choicePlayAgain)
+                    if (playAgain(board))
                     {
-                        case 'Y':
-                            // reset board
-                            resetBoard(board);
+                        player = 'X';   // reset player
 
-                            displayBoard(board);
+                        currentGame = 1;
 
-                            player = 'X';   // reset player
-                            currentGame = 1;
-                            fflush(stdin);  // Flush out any buffer in the input device
-                            break;
-                        case 'N':
-                            printf("\nThank you for playing!");
-                            return 0;
+                        fflush(stdin);  // Flush out any buffer in the input device
+                        continue;
                     }
+                    else
+                        return 0;
                 }
             }
             break;
+
 
         // Playing against CPU
         case '2':
@@ -100,32 +92,29 @@ int main()
                     // Display the winner
                     displayWinner(currentGame);
 
-                    // Ask the user if they want to play again after the game is over
-                    choicePlayAgain = playAgain();
-
-                    // if the user says yes, reset the game and start again
-                    switch(choicePlayAgain)
+                    // Check if the user wants to play again after the game is finished
+                    if (currentGame == 0 || currentGame == 10 || currentGame == -10)
                     {
-                        case 'Y':
-                            // reset board
-                            resetBoard(board);
+                        // Display the winner
+                        displayWinner(currentGame);
 
-                            displayBoard(board);
-
+                        // Ask the user if they want to play again after the game is over
+                        if (playAgain(board))
+                        {
                             player = 'X';   // reset player
+
                             currentGame = 1;
+
                             fflush(stdin);  // Flush out any buffer in the input device
-                            break;
-                        case 'N':
-                            printf("\nThank you for playing!");
+                            continue;
+                        }
+                        else
                             return 0;
                     }
-
-                    continue;
                 }
 
 
-                // Switch player after the move is done
+                // Switch player after the AI's move is done
                 player = switchPlayer(player);
 
                 location = selectLocation(player, board);
@@ -137,34 +126,24 @@ int main()
                 displayBoard(board);
 
 
-                // Check if the user wants to play again after the human wins
+                // Check if the user wants to play again after the game is finished
                 if (currentGame == 0 || currentGame == 10 || currentGame == -10)
                 {
                     // Display the winner
                     displayWinner(currentGame);
 
                     // Ask the user if they want to play again after the game is over
-                    choicePlayAgain = playAgain();
-
-                    // if the user says yes, reset the game and start again
-                    switch(choicePlayAgain)
+                    if (playAgain(board))
                     {
-                        case 'Y':
-                            // reset board
-                            resetBoard(board);
+                        player = 'X';   // reset player
 
-                            displayBoard(board);
+                        currentGame = 1;
 
-                            player = 'X';   // reset player
-                            currentGame = 1;
-                            fflush(stdin);  // Flush out any buffer in the input device
-                            break;
-                        case 'N':
-                            printf("\nThank you for playing!");
-                            return 0;
+                        fflush(stdin);  // Flush out any buffer in the input device
+                        continue;
                     }
-
-                    continue;
+                    else
+                        return 0;
                 }
             }
     }
@@ -172,6 +151,7 @@ int main()
 }
 //-----------------------------------------------------------------------------------------------------------
 // User defined functions
+
 
 // Ask if the user wants to play against an AI or another person
 char askGamemode()
@@ -353,45 +333,29 @@ int checkForWin(char boardGame[3][3])
     for (i = 0; i < 3; i++)
     {
         if ((boardGame[i][0] == 'X' && (boardGame[i][1] == 'X') && (boardGame[i][2] == 'X')))
-        {
             return 10;
-        }
         else if ((boardGame[i][0] == 'O' && (boardGame[i][1] == 'O') && (boardGame[i][2] == 'O')))
-        {
             return -10;
-        }
     }
 
     // Check columns
     for (i = 0; i < 3; i++)
     {
         if ((boardGame[0][i] == 'X' && (boardGame[1][i] == 'X') && (boardGame[2][i] == 'X')))
-        {
             return 10;
-        }
         else if ((boardGame[0][i] == 'O' && (boardGame[1][i] == 'O') && (boardGame[2][i] == 'O')))
-        {
             return -10;
-        }
     }
 
     // Check diagonals
     if ((boardGame[0][0] == 'X' && (boardGame[1][1] == 'X') && (boardGame[2][2] == 'X')))
-        {
             return 10;
-        }
     else if ((boardGame[0][0] == 'O' && (boardGame[1][1] == 'O') && (boardGame[2][2] == 'O')))
-        {
             return -10;
-        }
     else if ((boardGame[2][0] == 'X' && (boardGame[1][1] == 'X') && (boardGame[0][2] == 'X')))
-        {
             return 10;
-        }
     else if ((boardGame[2][0] == 'O' && (boardGame[1][1] == 'O') && (boardGame[0][2] == 'O')))
-        {
             return -10;
-        }
 
     // Check if it's a cats game
     for (i = 0; i < 3; i++)
@@ -399,16 +363,13 @@ int checkForWin(char boardGame[3][3])
         for (j = 0; j < 3; j++)
         {
             if (boardGame[i][j] == 'X' || boardGame[i][j] == 'O')
-            {
                 moves++;
-            }
         }
     }
 
+    // If the board is full of X's and O's return 0 to quit the game
     if (moves == 9)
-    {
         return 0;
-    }
 }
 
 
@@ -429,7 +390,7 @@ void displayWinner(int winner)
 }
 
 
-char playAgain()
+int playAgain(char board[3][3])
 {
     char choice;
 
@@ -454,12 +415,31 @@ char playAgain()
             choice -= 32;
     }
 
-    return choice;
+    // if the user says yes, reset the game and start again
+    switch(choice)
+    {
+        case 'Y':
+            // reset board
+            resetBoard(board);
+
+            displayBoard(board);
+            return 1;
+        case 'N':
+            printf("\nThank you for playing!");
+            return 0;
+    }
 }
 
 
 int miniMax(char board[3][3], int depth, int isMaximizing)
 {
+    /*
+    The algorithm will always start from the maximizing player,
+    and work its way down next to minimizing player to grab the minimizing score,
+    then the maximizing player grabs the max scores and it repeats until there are
+    no possible moves left.
+    */
+
     // Check the score for the current board
     int score = checkForWin(board);
 
@@ -482,7 +462,7 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
     // return minimizing player score if they win (-10)
     else if (score == -10)
         return score;
-    // If it is a cats game, return 0 indicating there is no score
+    // If it no player wins, return 0
     else if (score == 0)
         return 0;
 
@@ -490,11 +470,7 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
     // Check if the current player is the maximizing player
     if (isMaximizing)
     {
-        /*
-        The algorithm will always start from the maximizing player,
-        and work its way down next to minimizing player, then maximizing and
-        so on.
-        */
+
 
         // set bestMove to a arbitrarily small number to begin comparison for best moves
         bestMove = -1000;
@@ -514,7 +490,7 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
                     board[i][j] = 'X';
 
                     /* Recursively call the miniMax function to switch to minimizing and check the best move from
-                    the perspective of the minimizing player*/
+                    the perspective of the minimizing player, also increment the depth for every move checked.*/
                     move = miniMax(board, depth + 1, 0);
 
                     // Undo the maximizing move
