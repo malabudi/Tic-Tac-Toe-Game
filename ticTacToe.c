@@ -3,15 +3,15 @@
 // Function Prototypes
 char askGamemode();
 void displayBoard(char gameBoard[3][3]);
-void resetBoard(char gameBoard[3][3]);
+void setBoard(char gameBoard[3][3]);
 char switchPlayer(char player);
 char selectLocation(char player, char gameBoard[3][3]);
-int isSpotTaken(char location, char gameBoard[3][3]);      // Can make this function bool, but used int instead so I dont need to import the stdbool.h file
+int isSpotTaken(char location, char gameBoard[3][3]);
 char setTurn(char gameBoard[3][3], char location, char player);
 int checkForWin(char gameBoard[3][3]);
 void displayWinner(int winner);
 int playAgain(char board[3][3]);
-int miniMax(char board[3][3], int depth, int isMaximizing);
+int miniMax(char board[3][3], int depth, int alpha, int beta, int isMaximizing);
 void getBestMove(char board[3][3]);
 
 
@@ -23,11 +23,10 @@ int main()
 	char location;
 	char player = 'X';      // Initialize the first player to X, then switch to O for second player when necessary
 	int moves = 0;
-	int currentGame = 1;    // score for the current state of the tic tac toe game, 1 is default, 0 is cats, 10 and -10 are wins for X and O respectively
+	int currentGame = 1;    // score for the current state of the TicTacToe game, 1 is default, 0 is cats, 10 and -10 are wins for X and O respectively
 	char choicePlayAgain;
 
-
-	// Call functions to begin the game
+	// Ask the user if they want to play with two players or against an unbeatable AI
 	gamemode = askGamemode();
 
     switch(gamemode)
@@ -69,7 +68,6 @@ int main()
             }
             break;
 
-
         // Playing against CPU
         case '2':
 
@@ -85,34 +83,25 @@ int main()
 
                 currentGame = checkForWin(board); // Check if there is a win from the AI
 
-
                 // Ask the user if they want to play again if they lose to the AI
                 if (currentGame == 0 || currentGame == 10 || currentGame == -10)
                 {
                     // Display the winner
                     displayWinner(currentGame);
 
-                    // Check if the user wants to play again after the game is finished
-                    if (currentGame == 0 || currentGame == 10 || currentGame == -10)
+                    // Ask the user if they want to play again after the game is over
+                    if (playAgain(board))
                     {
-                        // Display the winner
-                        displayWinner(currentGame);
+                        player = 'X';   // reset player
 
-                        // Ask the user if they want to play again after the game is over
-                        if (playAgain(board))
-                        {
-                            player = 'X';   // reset player
+                        currentGame = 1;
 
-                            currentGame = 1;
-
-                            fflush(stdin);  // Flush out any buffer in the input device
-                            continue;
-                        }
-                        else
-                            return 0;
+                        fflush(stdin);  // Flush out any buffer in the input device
+                        continue;
                     }
+                    else
+                        return 0;
                 }
-
 
                 // Switch player after the AI's move is done
                 player = switchPlayer(player);
@@ -124,7 +113,6 @@ int main()
                 currentGame = checkForWin(board); // Check if there is a win from the human
 
                 displayBoard(board);
-
 
                 // Check if the user wants to play again after the game is finished
                 if (currentGame == 0 || currentGame == 10 || currentGame == -10)
@@ -150,7 +138,6 @@ int main()
 	return 0;
 }
 //-----------------------------------------------------------------------------------------------------------
-// User defined functions
 
 
 // Ask if the user wants to play against an AI or another person
@@ -198,7 +185,7 @@ void displayBoard(char gameBoard[3][3])
 }
 
 
-void resetBoard(char board[3][3])
+void setBoard(char board[3][3])
 {
     // Reinitialize the board to its empty values
     board[0][0] = '1';
@@ -328,6 +315,11 @@ int checkForWin(char boardGame[3][3])
     int moves = 0;
 
     // If the player wins, return false indicating the game is finished and has a winner
+    /*
+    If x wins, +10
+    If o wins, -10
+    If tied, 0
+    */
 
     // Check rows for wins
     for (i = 0; i < 3; i++)
@@ -420,7 +412,7 @@ int playAgain(char board[3][3])
     {
         case 'Y':
             // reset board
-            resetBoard(board);
+            setBoard(board);
 
             displayBoard(board);
             return 1;
@@ -431,13 +423,14 @@ int playAgain(char board[3][3])
 }
 
 
-int miniMax(char board[3][3], int depth, int isMaximizing)
+int miniMax(char board[3][3], int depth, int alpha, int beta, int isMaximizing)
 {
     /*
     The algorithm will always start from the maximizing player,
     and work its way down next to minimizing player to grab the minimizing score,
     then the maximizing player grabs the max scores and it repeats until there are
-    no possible moves left.
+    no possible moves left. The algorithm is even quicker with alpha-beta pruning,
+    finding the best move with the least amount of checks possible
     */
 
     // Check the score for the current board
@@ -449,12 +442,6 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
     int move;
     char placeholder;
     int i, j;
-
-    /*
-    If x wins, +10
-    If o wins, -10
-    If tied, 0
-    */
 
     // If the maximizing player wins return their score (10)
     if (score == 10)
@@ -470,10 +457,8 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
     // Check if the current player is the maximizing player
     if (isMaximizing)
     {
-
-
         // set bestMove to a arbitrarily small number to begin comparison for best moves
-        bestMove = -1000;
+        bestMove = -10000;
 
         // Check all spaces in the board
         for (i = 0; i < 3; i++)
@@ -491,7 +476,7 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
 
                     /* Recursively call the miniMax function to switch to minimizing and check the best move from
                     the perspective of the minimizing player, also increment the depth for every move checked.*/
-                    move = miniMax(board, depth + 1, 0);
+                    move = miniMax(board, depth + 1, alpha, beta, 0);
 
                     // Undo the maximizing move
                     board[i][j] = placeholder;
@@ -499,18 +484,29 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
                     // Check if the recursive function called and stored into move is the better move (higher score)
                     if (move > bestMove)
                         bestMove = move;
+
+                    // Assign the maximized move to beta if the minimizing move is less than the current beta value
+                    if (bestMove > alpha)
+                        alpha = bestMove;
+
+                    if (beta <= alpha)
+                        break;
                 }
             }
+
+            // Break out of outer loop for alpha-beta pruning
+            if (beta <= alpha)
+                break;
         }
 
-        // Return the final best move after recursion
-        return bestMove;
+        // Return the final best move after recursion, also subtract depth to grab the max score of the move in the least amount of moves possible
+        return bestMove - depth;
     }
     // If it is the minimizing player
     else
     {
         // Set this to a arbitrarily large number in order to find the numerically smallest move from the human player
-        bestMove = 1000;
+        bestMove = 10000;
 
         // Check all spaces in the board
         for (i = 0; i < 3; i++)
@@ -526,9 +522,9 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
                     // Add minimizing player to the board
                     board[i][j] = 'O';
 
-                    /* Recursively call the miniMax function to switch to mazimizing and check the best move from
-                    the perspective of the maximizing player*/
-                    move = miniMax(board, depth + 1, 1);
+                    /* Recursively call the miniMax function to switch to maximizing and check the best move from the perspective
+                    of the maximizing player.*/
+                    move = miniMax(board, depth + 1, alpha, beta, 1);
 
                     // Undo the maximizing move
                     board[i][j] = placeholder;
@@ -536,11 +532,24 @@ int miniMax(char board[3][3], int depth, int isMaximizing)
                     // Check if the recursive function called and stored into move is the better move (lower score)
                     if (move < bestMove)
                         bestMove = move;
+
+                    // Assign the minimized move to beta if the minimizing move is less than the current beta value
+                    if (bestMove < beta)
+                        beta = bestMove;
+
+                    /* If beta is less than the alpha value, we prune and prevent the for loop from searching further possible moves
+                    since we already found the best possible move*/
+                    if (beta <= alpha)
+                        break;
                 }
             }
+
+            // Break out of outer loop for alpha-beta pruning
+            if (beta <= alpha)
+                break;
         }
-        // return the best score or move after recursion
-        return bestMove;
+        // return the best score or move after recursion, also add depth to grab the min score of the move in the most amount of moves possible
+        return bestMove + depth;
     }
 }
 
@@ -554,7 +563,7 @@ void getBestMove(char board[3][3])
     char placeholder;
     int i, j;
 
-    // This for loop will first check any available spots, then call the minmax function
+    // This for loop will first check any available spots, then call the minimax function
     for (i = 0; i < 3; i++)
     {
         for (j = 0; j < 3; j++)
@@ -567,8 +576,8 @@ void getBestMove(char board[3][3])
                 // Temporarily make the move for the AI
                 board[i][j] = 'X';
 
-                // Check the score for the minimizing player using the minimax algorithm
-                move = miniMax(board, 0, 0);
+                // Check the score for the minimizing player using the minimax algorithm, also pass in -10000 and 10000 for alpha-beta pruning
+                move = miniMax(board, 0, -10000, 10000, 0);
 
                 // Revert the board to how it was
                 board[i][j] = placeholder;
