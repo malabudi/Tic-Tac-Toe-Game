@@ -4,7 +4,6 @@
 char askGamemode();
 void displayBoard(char gameBoard[3][3]);
 void setBoard(char gameBoard[3][3]);
-char switchPlayer(char player);
 char selectLocation(char player, char gameBoard[3][3]);
 int isSpotTaken(char location, char gameBoard[3][3]);
 char setTurn(char gameBoard[3][3], char location, char player);
@@ -18,13 +17,11 @@ void getBestMove(char board[3][3]);
 int main()
 {
     // Initialize/declare variables
-	char gamemode;
+	char gamemode, location, choicePlayAgain;
 	char board[3][3] = {{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', '9'}};
-	char location;
 	char player = 'X';      // Initialize the first player to X, then switch to O for second player when necessary
 	int moves = 0;
 	int currentGame = 1;    // score for the current state of the TicTacToe game, 1 is default, 0 is cats, 10 and -10 are wins for X and O respectively
-	char choicePlayAgain;
 
 	// Ask the user if they want to play with two players or against an unbeatable AI
 	gamemode = askGamemode();
@@ -103,8 +100,8 @@ int main()
                         return 0;
                 }
 
-                // Switch player after the AI's move is done
-                player = switchPlayer(player);
+                // Switch player after the AI's move is done ***
+                player = (player == 'X') ? 'O': 'X';
 
                 location = selectLocation(player, board);
 
@@ -156,7 +153,6 @@ char askGamemode()
     while (gameMode != '1' && gameMode != '2')
     {
         printf("\nInvalid input! Please enter either 1 - 2\n");
-
         printf("\nWould you like to play  2-Player or against a CPU?");
         printf("\n1 - 2 Player");
         printf("\n2 - CPU\n");
@@ -179,7 +175,6 @@ void displayBoard(char gameBoard[3][3])
 	{
 		for (j = 0; j < 3; j++) // With every index at outer array, loop through the inner array
 			printf("| %c ", gameBoard[i][j]);
-
 		printf("|\n-------------\n");
 	}
 }
@@ -187,35 +182,17 @@ void displayBoard(char gameBoard[3][3])
 
 void setBoard(char board[3][3])
 {
-    // Reinitialize the board to its empty values
-    board[0][0] = '1';
-    board[0][1] = '2';
-    board[0][2] = '3';
-    board[1][0] = '4';
-    board[1][1] = '5';
-    board[1][2] = '6';
-    board[2][0] = '7';
-    board[2][1] = '8';
-    board[2][2] = '9';
-}
+    // Reset the board when the function is called
+    int i, j;
+    char firstSpot = '1';
 
-
-char switchPlayer(char player)
-{
-    char switchedPlayer;
-
-    // Switch the player whenever the function is called
-    switch(player)
+    for (i = 0; i < 3; i++)
     {
-        case 'X':
-            switchedPlayer = 'O';
-            break;
-        case 'O':
-            switchedPlayer = 'X';
-            break;
-    }
-
-    return switchedPlayer;
+    	for (j = 0; j < 3; j++)
+    	{
+    		board[i][j] = firstSpot++;
+		}
+	}
 }
 
 
@@ -226,7 +203,6 @@ char selectLocation(char player, char gameBoard[3][3])
 	char location;
 	int isTaken;
 
-	// ------- Grab input --------
 	// Ask user to select location
 	printf("\nPlease select your location player %c (1-9): ", player);
 
@@ -239,9 +215,6 @@ char selectLocation(char player, char gameBoard[3][3])
     // check if spot is already taken
 	isTaken = isSpotTaken(strLocation[0], gameBoard);
 
-
-
-	// --------------Data validation-----------------
 	/* Check if the input is only a single character with an enter key at the
 	second index in string, then check if that single character is 1-9*/
 	while (strLocation[1] != '\n' || strLocation[0] < 49 || strLocation[0] > 57 || isTaken)
@@ -294,18 +267,8 @@ char setTurn(char gameBoard[3][3], char location, char player)
         }
     }
 
-    // Switch the turn of the player after their turn is finished
-    switch(player)
-    {
-        case 'X':
-            player = 'O';
-            break;
-        case 'O':
-            player = 'X';
-            break;
-    }
-
-    return player;
+    // Switch the turn of the player after their turn is finished using a ternary operator
+    return player = (player == 'X') ? 'O': 'X';
 }
 
 
@@ -313,13 +276,6 @@ int checkForWin(char boardGame[3][3])
 {
     int i, j;
     int moves = 0;
-
-    // If the player wins, return false indicating the game is finished and has a winner
-    /*
-    If x wins, +10
-    If o wins, -10
-    If tied, 0
-    */
 
     // Check rows for wins
     for (i = 0; i < 3; i++)
@@ -426,22 +382,17 @@ int playAgain(char board[3][3])
 int miniMax(char board[3][3], int depth, int alpha, int beta, int isMaximizing)
 {
     /*
-    The algorithm will always start from the maximizing player,
-    and work its way down next to minimizing player to grab the minimizing score,
-    then the maximizing player grabs the max scores and it repeats until there are
-    no possible moves left. The algorithm is even quicker with alpha-beta pruning,
-    finding the best move with the least amount of checks possible
+    The algorithm will always start from the maximizing player, and work its way down next to minimizing player to
+	grab the minimizing score, then the maximizing player grabs the max scores and it repeats until there are
+    no possible moves left. The algorithm is even quicker with alpha-beta pruning, finding the best move with the least amount of checks possible
     */
 
     // Check the score for the current board
     int score = checkForWin(board);
 
     // Hold the max/min score in the best move variable
-    int bestMove;
-
-    int move;
+    int bestMove, move, i, j;
     char placeholder;
-    int i, j;
 
     // If the maximizing player wins return their score (10)
     if (score == 10)
@@ -558,10 +509,9 @@ int miniMax(char board[3][3], int depth, int alpha, int beta, int isMaximizing)
 // Start off as the maximizing player
 void getBestMove(char board[3][3])
 {
-    int move, bestMoveI, bestMoveJ;
+    int move, bestMoveI, bestMoveJ, i, j;
     int bestMove = -10000;
     char placeholder;
-    int i, j;
 
     // This for loop will first check any available spots, then call the minimax function
     for (i = 0; i < 3; i++)
